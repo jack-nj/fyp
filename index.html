@@ -1,0 +1,2024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GameHub Local - Firebase CRUD</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+</head>
+<body>
+    <!-- Navigation Header -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-gamepad"></i>
+                <span>GameHub Local</span>
+            </div>
+            <div class="nav-menu">
+                <a href="#dashboard" class="nav-link active" data-page="dashboard">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a href="#games" class="nav-link" data-page="games">
+                    <i class="fas fa-gamepad"></i> Games
+                </a>
+                <a href="#reviews" class="nav-link" data-page="reviews">
+                    <i class="fas fa-star"></i> Reviews
+                </a>
+                <a href="#recommendations" class="nav-link" data-page="recommendations">
+                    <i class="fas fa-lightbulb"></i> Recommendations
+                </a>
+                <a href="#tags" class="nav-link" data-page="tags">
+                    <i class="fas fa-tags"></i> Tags
+                </a>
+                <a href="#moderation" class="nav-link" data-page="moderation">
+                    <i class="fas fa-shield-alt"></i> Moderation
+                </a>
+                <a href="#users" class="nav-link" data-page="users">
+                    <i class="fas fa-users"></i> Users
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Dashboard Page -->
+        <div id="dashboard" class="page active">
+            <div class="page-header">
+                <h1><i class="fas fa-tachometer-alt"></i> Dashboard</h1>
+                <p>Welcome to GameHub Local - Direct Firebase CRUD</p>
+            </div>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon games">
+                        <i class="fas fa-gamepad"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="statsGames">0</h3>
+                        <p>Games in Library</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon reviews">
+                        <i class="fas fa-star"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="statsReviews">0</h3>
+                        <p>Reviews Written</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon users">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="statsUsers">0</h3>
+                        <p>Active Users</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon tags">
+                        <i class="fas fa-tags"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="statsTags">0</h3>
+                        <p>Tags Available</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon recommendations">
+                        <i class="fas fa-lightbulb"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="statsRecommendations">0</h3>
+                        <p>Recommendations</p>
+                    </div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon moderation">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="statsModerationLogs">0</h3>
+                        <p>Moderation Logs</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Games Page -->
+        <div id="games" class="page">
+            <div class="page-header">
+                <h1><i class="fas fa-gamepad"></i> Games Library</h1>
+                <div class="page-actions">
+                    <button class="btn btn-success" onclick="showGameForm()">
+                        <i class="fas fa-plus"></i> Add Game
+                    </button>
+                    <button class="btn btn-info" onclick="showGameBrowser()">
+                        <i class="fas fa-search"></i> Browse CheapShark
+                    </button>
+                </div>
+            </div>
+
+            <!-- CheapShark Game Browser -->
+            <div id="gameBrowser" class="form-container" style="display: none;">
+                <div class="form-header">
+                    <h3>Browse Games - CheapShark API</h3>
+                    <button class="btn-close" onclick="hideGameBrowser()">×</button>
+                </div>
+                <div class="browser-content">
+                    <div id="apiSearchResults" class="api-results">
+                        <p class="text-center">Loading popular games from CheapShark API...</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Game Form -->
+            <div id="gameForm" class="form-container" style="display: none;">
+                <h3 id="gameFormTitle">Add New Game</h3>
+                <form id="gameFormElement" onsubmit="submitGameForm(event); return false;">
+                    <input type="hidden" id="gameId" value="">
+                    <div class="form-group">
+                        <label for="gameTitle">Title *</label>
+                        <input type="text" id="gameTitle" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="gameDeveloper">Developer *</label>
+                        <input type="text" id="gameDeveloper" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="gameGenre">Genre (comma-separated)</label>
+                        <input type="text" id="gameGenre" placeholder="Action, Adventure, RPG">
+                    </div>
+                    <div class="form-group">
+                        <label for="gamePlatform">Platform (comma-separated)</label>
+                        <input type="text" id="gamePlatform" placeholder="PC, Console, Mobile">
+                    </div>
+                    <div class="form-group">
+                        <label for="gameDescription">Description</label>
+                        <textarea id="gameDescription" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="gameStatus">Status</label>
+                        <select id="gameStatus">
+                            <option value="available">Available</option>
+                            <option value="coming_soon">Coming Soon</option>
+                            <option value="discontinued">Discontinued</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary" onclick="console.log('Save button clicked!')">Save Game</button>
+                        <button type="button" class="btn btn-secondary" onclick="hideGameForm()">Cancel</button>
+                    </div>
+                </form>
+            </div>
+            
+            <div class="content-filters">
+                <input type="text" id="gamesSearch" placeholder="Search games..." class="search-input">
+                <button onclick="filterGames()">Search</button>
+            </div>
+
+            <div class="games-grid" id="gamesGrid">
+                <p>Loading games...</p>
+            </div>
+        </div>
+
+        <!-- Reviews Page -->
+        <div id="reviews" class="page">
+            <div class="page-header">
+                <h1><i class="fas fa-star"></i> Reviews</h1>
+                <div class="page-actions">
+                    <button class="btn btn-success" onclick="showReviewForm()">
+                        <i class="fas fa-plus"></i> Add Review
+                    </button>
+                </div>
+            </div>
+
+            <!-- Review Form -->
+            <div id="reviewForm" class="form-container" style="display: none;">
+                <div class="form-header">
+                    <h3 id="reviewFormTitle">Add New Review</h3>
+                    <button class="btn-close" onclick="hideReviewForm()">×</button>
+                </div>
+                <form id="reviewFormElement" onsubmit="submitReviewForm(event)">
+                    <input type="hidden" id="reviewId" value="">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="reviewGameId">Game ID *</label>
+                            <input type="text" id="reviewGameId" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="reviewUserId">User ID *</label>
+                            <input type="text" id="reviewUserId" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="reviewRating">Rating (1-5) *</label>
+                            <select id="reviewRating" required>
+                                <option value="">Select Rating</option>
+                                <option value="1">1 Star</option>
+                                <option value="2">2 Stars</option>
+                                <option value="3">3 Stars</option>
+                                <option value="4">4 Stars</option>
+                                <option value="5">5 Stars</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="reviewTitle">Review Title *</label>
+                            <input type="text" id="reviewTitle" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="reviewText">Review Text *</label>
+                        <textarea id="reviewText" rows="4" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="reviewRecommended">Recommended</label>
+                        <select id="reviewRecommended">
+                            <option value="true">Yes</option>
+                            <option value="false">No</option>
+                        </select>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Review
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="hideReviewForm()">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="content-filters">
+                <input type="text" id="reviewsSearch" placeholder="Search reviews..." class="search-input">
+                <button onclick="filterReviews()">Search</button>
+            </div>
+
+            <div class="reviews-list" id="reviewsList">
+                <p>Loading reviews...</p>
+            </div>
+        </div>
+
+        <!-- Recommendations Page -->
+        <div id="recommendations" class="page">
+            <div class="page-header">
+                <h1><i class="fas fa-lightbulb"></i> Recommendations</h1>
+                <div class="page-actions">
+                    <button class="btn btn-success" onclick="showRecommendationForm()">
+                        <i class="fas fa-plus"></i> Add Recommendation
+                    </button>
+                </div>
+            </div>
+
+            <!-- Recommendation Form -->
+            <div id="recommendationForm" class="form-container" style="display: none;">
+                <div class="form-header">
+                    <h3 id="recommendationFormTitle">Add New Recommendation</h3>
+                    <button class="btn-close" onclick="hideRecommendationForm()">×</button>
+                </div>
+                <form id="recommendationFormElement" onsubmit="submitRecommendationForm(event)">
+                    <input type="hidden" id="recommendationId" value="">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="recommendationUserId">User ID *</label>
+                            <input type="text" id="recommendationUserId" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="recommendationGameId">Game ID *</label>
+                            <input type="text" id="recommendationGameId" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="recommendationReason">Reason *</label>
+                            <input type="text" id="recommendationReason" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="recommendationScore">Score (1-10) *</label>
+                            <input type="number" id="recommendationScore" min="1" max="10" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="recommendationDescription">Description</label>
+                        <textarea id="recommendationDescription" rows="3"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="recommendationCategory">Category</label>
+                            <select id="recommendationCategory">
+                                <option value="similar_games">Similar Games</option>
+                                <option value="same_genre">Same Genre</option>
+                                <option value="trending">Trending</option>
+                                <option value="new_releases">New Releases</option>
+                                <option value="top_rated">Top Rated</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="recommendationStatus">Status</label>
+                            <select id="recommendationStatus">
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Recommendation
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="hideRecommendationForm()">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="content-filters">
+                <input type="text" id="recommendationsSearch" placeholder="Search recommendations..." class="search-input">
+                <button onclick="filterRecommendations()">Search</button>
+            </div>
+            
+            <div class="recommendations-content" id="recommendationsContent">
+                <p>Loading recommendations...</p>
+            </div>
+        </div>
+
+        <!-- Tags Page -->
+        <div id="tags" class="page">
+            <div class="page-header">
+                <h1><i class="fas fa-tags"></i> Tags & Categories</h1>
+                <div class="page-actions">
+                    <button class="btn btn-success" onclick="showTagForm()">
+                        <i class="fas fa-plus"></i> Add Tag
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tag Form -->
+            <div id="tagForm" class="form-container" style="display: none;">
+                <div class="form-header">
+                    <h3 id="tagFormTitle">Add New Tag</h3>
+                    <button class="btn-close" onclick="hideTagForm()">×</button>
+                </div>
+                <form id="tagFormElement" onsubmit="submitTagForm(event)">
+                    <input type="hidden" id="tagId" value="">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="tagName">Tag Name *</label>
+                            <input type="text" id="tagName" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="tagCategory">Category *</label>
+                            <select id="tagCategory" required>
+                                <option value="">Select Category</option>
+                                <option value="genre">Genre</option>
+                                <option value="platform">Platform</option>
+                                <option value="gameplay">Gameplay</option>
+                                <option value="difficulty">Difficulty</option>
+                                <option value="age_rating">Age Rating</option>
+                                <option value="theme">Theme</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="tagDescription">Description</label>
+                        <textarea id="tagDescription" rows="3"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="tagColor">Color</label>
+                            <input type="color" id="tagColor" value="#007bff">
+                        </div>
+                        <div class="form-group">
+                            <label for="tagStatus">Status</label>
+                            <select id="tagStatus">
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Tag
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="hideTagForm()">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="content-filters">
+                <input type="text" id="tagsSearch" placeholder="Search tags..." class="search-input">
+                <button onclick="filterTags()">Search</button>
+            </div>
+
+            <div class="tags-grid" id="tagsGrid">
+                <p>Loading tags...</p>
+            </div>
+        </div>
+
+        <!-- Moderation Page -->
+        <div id="moderation" class="page">
+            <div class="page-header">
+                <h1><i class="fas fa-shield-alt"></i> Moderation</h1>
+                <div class="page-actions">
+                    <button class="btn btn-success" onclick="showModerationForm()">
+                        <i class="fas fa-plus"></i> Add Log
+                    </button>
+                </div>
+            </div>
+
+            <!-- Moderation Form -->
+            <div id="moderationForm" class="form-container" style="display: none;">
+                <div class="form-header">
+                    <h3 id="moderationFormTitle">Add Moderation Log</h3>
+                    <button class="btn-close" onclick="hideModerationForm()">×</button>
+                </div>
+                <form id="moderationFormElement" onsubmit="submitModerationForm(event)">
+                    <input type="hidden" id="moderationId" value="">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="moderationAction">Action *</label>
+                            <select id="moderationAction" required>
+                                <option value="">Select Action</option>
+                                <option value="warning">Warning</option>
+                                <option value="ban">Ban</option>
+                                <option value="suspend">Suspend</option>
+                                <option value="content_removal">Content Removal</option>
+                                <option value="review_approved">Review Approved</option>
+                                <option value="review_rejected">Review Rejected</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="moderationTargetId">Target ID *</label>
+                            <input type="text" id="moderationTargetId" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="moderationTargetType">Target Type *</label>
+                            <select id="moderationTargetType" required>
+                                <option value="">Select Type</option>
+                                <option value="user">User</option>
+                                <option value="review">Review</option>
+                                <option value="game">Game</option>
+                                <option value="recommendation">Recommendation</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="moderationModeratorId">Moderator ID *</label>
+                            <input type="text" id="moderationModeratorId" required>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="moderationReason">Reason *</label>
+                        <textarea id="moderationReason" rows="3" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="moderationDetails">Additional Details</label>
+                        <textarea id="moderationDetails" rows="3"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="moderationSeverity">Severity</label>
+                            <select id="moderationSeverity">
+                                <option value="low">Low</option>
+                                <option value="medium">Medium</option>
+                                <option value="high">High</option>
+                                <option value="critical">Critical</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="moderationStatus">Status</label>
+                            <select id="moderationStatus">
+                                <option value="active">Active</option>
+                                <option value="resolved">Resolved</option>
+                                <option value="pending">Pending</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Log
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="hideModerationForm()">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="content-filters">
+                <input type="text" id="moderationSearch" placeholder="Search logs..." class="search-input">
+                <button onclick="filterModerationLogs()">Search</button>
+            </div>
+
+            <div class="logs-list" id="logsList">
+                <p>Loading moderation logs...</p>
+            </div>
+        </div>
+
+        <!-- Users Page -->
+        <div id="users" class="page">
+            <div class="page-header">
+                <h1><i class="fas fa-users"></i> User Management</h1>
+                <div class="page-actions">
+                    <button class="btn btn-success" onclick="showUserForm()">
+                        <i class="fas fa-plus"></i> Add User
+                    </button>
+                </div>
+            </div>
+
+            <!-- User Form -->
+            <div id="userForm" class="form-container" style="display: none;">
+                <div class="form-header">
+                    <h3 id="userFormTitle">Add New User</h3>
+                    <button class="btn-close" onclick="hideUserForm()">×</button>
+                </div>
+                <form id="userFormElement" onsubmit="submitUserForm(event)">
+                    <input type="hidden" id="userId" value="">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="userUsername">Username *</label>
+                            <input type="text" id="userUsername" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="userEmail">Email *</label>
+                            <input type="email" id="userEmail" required>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="userDisplayName">Display Name</label>
+                            <input type="text" id="userDisplayName">
+                        </div>
+                        <div class="form-group">
+                            <label for="userRole">Role</label>
+                            <select id="userRole">
+                                <option value="user">User</option>
+                                <option value="moderator">Moderator</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="userBio">Bio</label>
+                        <textarea id="userBio" rows="3"></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="userLocation">Location</label>
+                            <input type="text" id="userLocation">
+                        </div>
+                        <div class="form-group">
+                            <label for="userStatus">Status</label>
+                            <select id="userStatus">
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="banned">Banned</option>
+                                <option value="suspended">Suspended</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save User
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="hideUserForm()">
+                            Cancel
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="content-filters">
+                <input type="text" id="usersSearch" placeholder="Search users..." class="search-input">
+                <button onclick="filterUsers()">Search</button>
+            </div>
+
+            <div class="users-list" id="usersList">
+                <p>Loading users...</p>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Firebase configuration - SAME AS YOUR WORKING simple-crud-test
+        const firebaseConfig = {
+            apiKey: "AIzaSyDs85pi4hcRqtFUg-mrNgci9aWPV1pUI_M",
+            authDomain: "c290-constellation-of-kindness.firebaseapp.com",
+            projectId: "c290-constellation-of-kindness",
+            storageBucket: "c290-constellation-of-kindness.firebasestorage.app",
+            messagingSenderId: "908459397825",
+            appId: "1:908459397825:web:8aced5a815a902aac5fa40"
+        };
+
+        // Initialize Firebase - SAME PATTERN AS WORKING simple-crud-test
+        let app, db;
+
+        async function initFirebase() {
+            try {
+                console.log('Initializing Firebase...');
+                app = firebase.initializeApp(firebaseConfig);
+                db = firebase.firestore();
+                
+                // Test connection
+                await db.collection('users').limit(1).get();
+                console.log('✅ Firebase connected successfully!');
+                return true;
+            } catch (error) {
+                console.error('❌ Firebase error:', error.message);
+                return false;
+            }
+        }
+
+        // Navigation
+        function showPage(pageId) {
+            // Hide all pages
+            document.querySelectorAll('.page').forEach(page => {
+                page.classList.remove('active');
+            });
+            
+            // Remove active from nav links
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+            });
+            
+            // Show selected page
+            document.getElementById(pageId).classList.add('active');
+            document.querySelector(`[data-page="${pageId}"]`).classList.add('active');
+            
+            // Load page data
+            loadPageData(pageId);
+        }
+
+        async function loadPageData(pageId) {
+            switch(pageId) {
+                case 'dashboard':
+                    await refreshStats();
+                    break;
+                case 'games':
+                    await loadGames();
+                    break;
+                case 'reviews':
+                    await loadReviews();
+                    break;
+                case 'recommendations':
+                    await loadRecommendations();
+                    break;
+                case 'tags':
+                    await loadTags();
+                    break;
+                case 'moderation':
+                    await loadModerationLogs();
+                    break;
+                case 'users':
+                    await loadUsers();
+                    break;
+            }
+        }
+
+        // CRUD Operations - USING SAME DIRECT FIREBASE PATTERN
+
+        // 1. USERS CRUD
+        async function loadUsers() {
+            try {
+                console.log('Loading users...');
+                const snapshot = await db.collection('users').get();
+                const users = [];
+                
+                snapshot.forEach(doc => {
+                    users.push({ id: doc.id, ...doc.data() });
+                });
+
+                const html = users.length > 0 
+                    ? users.map(user => `
+                        <div class="user-card">
+                            <h3>${user.username || user.displayName || 'Unknown User'}</h3>
+                            <p><strong>Email:</strong> ${user.email || 'No email'}</p>
+                            <p><strong>Role:</strong> ${user.role || 'user'}</p>
+                            <p><strong>Status:</strong> ${user.status || 'active'}</p>
+                            <p><strong>Created:</strong> ${user.createdAt || 'Unknown'}</p>
+                            <div class="card-actions">
+                                <button onclick="showUserForm('${user.id}')" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button onclick="deleteUser('${user.id}')" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')
+                    : '<p>No users found</p>';
+
+                document.getElementById('usersList').innerHTML = html;
+                console.log(`✅ Loaded ${users.length} users`);
+                
+            } catch (error) {
+                console.error('❌ Error loading users:', error);
+                document.getElementById('usersList').innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+
+        async function addSampleUser() {
+            try {
+                const userData = {
+                    username: `user_${Date.now()}`,
+                    email: `user${Date.now()}@example.com`,
+                    displayName: `Test User ${Date.now()}`,
+                    role: 'user',
+                    isActive: true,
+                    createdAt: new Date().toISOString()
+                };
+
+                const docRef = await db.collection('users').add(userData);
+                console.log(`✅ User added with ID: ${docRef.id}`);
+                await loadUsers();
+                
+            } catch (error) {
+                console.error('❌ Error adding user:', error);
+            }
+        }
+
+        async function deleteUser(userId) {
+            if (confirm('Are you sure you want to delete this user?')) {
+                try {
+                    await db.collection('users').doc(userId).delete();
+                    console.log(`✅ User deleted: ${userId}`);
+                    showNotification('User deleted successfully!', 'success');
+                    await loadUsers();
+                    await refreshStats(); // Update dashboard stats
+                } catch (error) {
+                    console.error('❌ Error deleting user:', error);
+                    showNotification('Error deleting user: ' + error.message, 'error');
+                }
+            }
+        }
+
+        // 2. GAMES CRUD
+        async function loadGames() {
+            try {
+                console.log('Loading games...');
+                const snapshot = await db.collection('games').get();
+                const games = [];
+                
+                snapshot.forEach(doc => {
+                    games.push({ id: doc.id, ...doc.data() });
+                });
+
+                const html = games.length > 0 
+                    ? games.map(game => `
+                        <div class="game-card">
+                            <h3>${game.title || 'Untitled Game'}</h3>
+                            <p><strong>Developer:</strong> ${game.developer || 'Unknown'}</p>
+                            <p><strong>Genre:</strong> ${Array.isArray(game.genre) ? game.genre.join(', ') : game.genre || 'Unknown'}</p>
+                            <p><strong>Platform:</strong> ${Array.isArray(game.platform) ? game.platform.join(', ') : game.platform || 'Unknown'}</p>
+                            <p><strong>Status:</strong> ${game.status || 'available'}</p>
+                            <p><strong>Created:</strong> ${game.createdAt || 'Unknown'}</p>
+                            <div class="card-actions">
+                                <button onclick="showGameForm('${game.id}')" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button onclick="deleteGame('${game.id}')" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')
+                    : '<p>No games found</p>';
+
+                document.getElementById('gamesGrid').innerHTML = html;
+                console.log(`✅ Loaded ${games.length} games`);
+                
+            } catch (error) {
+                console.error('❌ Error loading games:', error);
+                document.getElementById('gamesGrid').innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+
+        async function addSampleGame() {
+            try {
+                const gameData = {
+                    title: `Test Game ${Date.now()}`,
+                    developer: 'Test Developer',
+                    genre: ['Action', 'Adventure'],
+                    platform: ['PC', 'Console'],
+                    description: 'A test game for demonstration',
+                    status: 'available',
+                    createdAt: new Date().toISOString()
+                };
+
+                const docRef = await db.collection('games').add(gameData);
+                console.log(`✅ Game added with ID: ${docRef.id}`);
+                await loadGames();
+                
+            } catch (error) {
+                console.error('❌ Error adding game:', error);
+            }
+        }
+
+        async function deleteGame(gameId) {
+            if (confirm('Are you sure you want to delete this game?')) {
+                try {
+                    await db.collection('games').doc(gameId).delete();
+                    console.log(`✅ Game deleted: ${gameId}`);
+                    showNotification('Game deleted successfully!', 'success');
+                    await loadGames();
+                    await refreshStats(); // Update dashboard stats
+                } catch (error) {
+                    console.error('❌ Error deleting game:', error);
+                    showNotification('Error deleting game: ' + error.message, 'error');
+                }
+            }
+        }
+
+        // 3. REVIEWS CRUD
+        async function loadReviews() {
+            try {
+                console.log('Loading reviews...');
+                const snapshot = await db.collection('reviews').get();
+                const reviews = [];
+                
+                snapshot.forEach(doc => {
+                    reviews.push({ id: doc.id, ...doc.data() });
+                });
+
+                const html = reviews.length > 0 
+                    ? reviews.map(review => `
+                        <div class="review-card">
+                            <h4>${review.title || 'Untitled Review'}</h4>
+                            <p><strong>Rating:</strong> ${'★'.repeat(review.rating || 0)}${'☆'.repeat(5 - (review.rating || 0))}</p>
+                            <p><strong>Content:</strong> ${review.content || 'No content'}</p>
+                            <p><strong>Game ID:</strong> ${review.gameId || 'Unknown'}</p>
+                            <p><strong>User ID:</strong> ${review.userId || 'Unknown'}</p>
+                            <p><strong>Recommended:</strong> ${review.recommended ? 'Yes' : 'No'}</p>
+                            <p><strong>Created:</strong> ${review.createdAt || 'Unknown'}</p>
+                            <div class="card-actions">
+                                <button onclick="showReviewForm('${review.id}')" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button onclick="deleteReview('${review.id}')" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')
+                    : '<p>No reviews found</p>';
+
+                document.getElementById('reviewsList').innerHTML = html;
+                console.log(`✅ Loaded ${reviews.length} reviews`);
+                
+            } catch (error) {
+                console.error('❌ Error loading reviews:', error);
+                document.getElementById('reviewsList').innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+
+        async function addSampleReview() {
+            try {
+                // Get a random game and user
+                const gameSnapshot = await db.collection('games').limit(1).get();
+                const userSnapshot = await db.collection('users').limit(1).get();
+                
+                if (gameSnapshot.empty || userSnapshot.empty) {
+                    console.log('Need at least one game and one user to create a review');
+                    return;
+                }
+
+                const gameId = gameSnapshot.docs[0].id;
+                const userId = userSnapshot.docs[0].id;
+
+                const reviewData = {
+                    gameId: gameId,
+                    userId: userId,
+                    rating: Math.floor(Math.random() * 5) + 1,
+                    title: `Great game review ${Date.now()}`,
+                    content: 'This is a sample review for testing purposes.',
+                    moderationStatus: 'approved',
+                    helpful: 0,
+                    notHelpful: 0,
+                    createdAt: new Date().toISOString()
+                };
+
+                const docRef = await db.collection('reviews').add(reviewData);
+                console.log(`✅ Review added with ID: ${docRef.id}`);
+                await loadReviews();
+                
+            } catch (error) {
+                console.error('❌ Error adding review:', error);
+            }
+        }
+
+        async function deleteReview(reviewId) {
+            if (confirm('Are you sure you want to delete this review?')) {
+                try {
+                    await db.collection('reviews').doc(reviewId).delete();
+                    console.log(`✅ Review deleted: ${reviewId}`);
+                    showNotification('Review deleted successfully!', 'success');
+                    await loadReviews();
+                    await refreshStats(); // Update dashboard stats
+                } catch (error) {
+                    console.error('❌ Error deleting review:', error);
+                    showNotification('Error deleting review: ' + error.message, 'error');
+                }
+            }
+        }
+
+        // 4. RECOMMENDATIONS CRUD
+        async function loadRecommendations() {
+            try {
+                console.log('Loading recommendations...');
+                const snapshot = await db.collection('recommendations').get();
+                const recommendations = [];
+                
+                snapshot.forEach(doc => {
+                    recommendations.push({ id: doc.id, ...doc.data() });
+                });
+
+                const html = recommendations.length > 0 
+                    ? recommendations.map(rec => `
+                        <div class="recommendation-card">
+                            <h4>Recommendation for User: ${rec.userId || 'Unknown'}</h4>
+                            <p><strong>Algorithm:</strong> ${rec.algorithm || 'Unknown'}</p>
+                            <p><strong>Category:</strong> ${rec.category || 'general'}</p>
+                            <p><strong>Score:</strong> ${rec.score || 'N/A'}</p>
+                            <p><strong>Reason:</strong> ${rec.reason || 'No reason provided'}</p>
+                            <p><strong>Generated:</strong> ${rec.generatedAt || 'Unknown'}</p>
+                            <p><strong>Items:</strong> ${rec.recommendations ? rec.recommendations.length : 0}</p>
+                            <div class="card-actions">
+                                <button onclick="showRecommendationForm('${rec.id}')" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button onclick="deleteRecommendation('${rec.id}')" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')
+                    : '<p>No recommendations found</p>';
+
+                document.getElementById('recommendationsContent').innerHTML = html;
+                console.log(`✅ Loaded ${recommendations.length} recommendations`);
+                
+            } catch (error) {
+                console.error('❌ Error loading recommendations:', error);
+                document.getElementById('recommendationsContent').innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+
+        async function addSampleRecommendation() {
+            try {
+                // Get a random user
+                const userSnapshot = await db.collection('users').limit(1).get();
+                
+                if (userSnapshot.empty) {
+                    console.log('Need at least one user to create recommendations');
+                    return;
+                }
+
+                const userId = userSnapshot.docs[0].id;
+
+                const recommendationData = {
+                    userId: userId,
+                    algorithm: 'content_based',
+                    generatedAt: new Date().toISOString(),
+                    isViewed: false,
+                    recommendations: [
+                        {
+                            gameId: 'sample_game_1',
+                            score: 0.95,
+                            reasons: ['High rating', 'Similar genre', 'Popular choice']
+                        },
+                        {
+                            gameId: 'sample_game_2', 
+                            score: 0.87,
+                            reasons: ['Matches preferences', 'Recently trending']
+                        }
+                    ],
+                    preferences: {
+                        favoriteGenres: ['Action', 'RPG'],
+                        minRating: 4.0
+                    },
+                    createdAt: new Date().toISOString()
+                };
+
+                const docRef = await db.collection('recommendations').add(recommendationData);
+                console.log(`✅ Recommendation added with ID: ${docRef.id}`);
+                await loadRecommendations();
+                
+            } catch (error) {
+                console.error('❌ Error adding recommendation:', error);
+            }
+        }
+
+        async function deleteRecommendation(recId) {
+            if (confirm('Are you sure you want to delete this recommendation?')) {
+                try {
+                    await db.collection('recommendations').doc(recId).delete();
+                    console.log(`✅ Recommendation deleted: ${recId}`);
+                    showNotification('Recommendation deleted successfully!', 'success');
+                    await loadRecommendations();
+                    await refreshStats(); // Update dashboard stats
+                } catch (error) {
+                    console.error('❌ Error deleting recommendation:', error);
+                    showNotification('Error deleting recommendation: ' + error.message, 'error');
+                }
+            }
+        }
+
+        // 5. TAGS CRUD
+        async function loadTags() {
+            try {
+                console.log('Loading tags...');
+                const snapshot = await db.collection('tags').get();
+                const tags = [];
+                
+                snapshot.forEach(doc => {
+                    tags.push({ id: doc.id, ...doc.data() });
+                });
+
+                const html = tags.length > 0 
+                    ? tags.map(tag => `
+                        <div class="tag-card">
+                            <h4>${tag.name || 'Unnamed Tag'}</h4>
+                            <p><strong>Category:</strong> ${tag.type || 'other'}</p>
+                            <p><strong>Description:</strong> ${tag.description || 'No description'}</p>
+                            <p><strong>Color:</strong> <span style="background: ${tag.color || '#ccc'}; color: white; padding: 2px 8px; border-radius: 3px;">${tag.color || '#ccc'}</span></p>
+                            <p><strong>Active:</strong> ${tag.isActive ? 'Yes' : 'No'}</p>
+                            <p><strong>Game Count:</strong> ${tag.gameCount || 0}</p>
+                            <div class="card-actions">
+                                <button onclick="showTagForm('${tag.id}')" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button onclick="deleteTag('${tag.id}')" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')
+                    : '<p>No tags found</p>';
+
+                document.getElementById('tagsGrid').innerHTML = html;
+                console.log(`✅ Loaded ${tags.length} tags`);
+                
+            } catch (error) {
+                console.error('❌ Error loading tags:', error);
+                document.getElementById('tagsGrid').innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+
+        async function addSampleTag() {
+            try {
+                const tagTypes = ['genre', 'category', 'feature', 'status'];
+                const tagNames = ['Action', 'Adventure', 'RPG', 'Strategy', 'Indie', 'Multiplayer', 'Singleplayer', 'Early Access'];
+                const colors = ['#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#54a0ff', '#5f27cd'];
+                
+                const tagData = {
+                    name: `${tagNames[Math.floor(Math.random() * tagNames.length)]}_${Date.now()}`,
+                    type: tagTypes[Math.floor(Math.random() * tagTypes.length)],
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    description: 'Sample tag for testing',
+                    isActive: true,
+                    gameCount: 0,
+                    createdBy: null,
+                    createdAt: new Date().toISOString()
+                };
+
+                const docRef = await db.collection('tags').add(tagData);
+                console.log(`✅ Tag added with ID: ${docRef.id}`);
+                await loadTags();
+                
+            } catch (error) {
+                console.error('❌ Error adding tag:', error);
+            }
+        }
+
+        async function deleteTag(tagId) {
+            if (confirm('Are you sure you want to delete this tag?')) {
+                try {
+                    await db.collection('tags').doc(tagId).delete();
+                    console.log(`✅ Tag deleted: ${tagId}`);
+                    showNotification('Tag deleted successfully!', 'success');
+                    await loadTags();
+                    await refreshStats(); // Update dashboard stats
+                } catch (error) {
+                    console.error('❌ Error deleting tag:', error);
+                    showNotification('Error deleting tag: ' + error.message, 'error');
+                }
+            }
+        }
+
+        // 6. MODERATION LOGS CRUD
+        async function loadModerationLogs() {
+            try {
+                console.log('Loading moderation logs...');
+                const snapshot = await db.collection('moderationLogs').get();
+                const logs = [];
+                
+                snapshot.forEach(doc => {
+                    logs.push({ id: doc.id, ...doc.data() });
+                });
+
+                const html = logs.length > 0 
+                    ? logs.map(log => `
+                        <div class="log-card">
+                            <h4>${log.action || 'Unknown Action'}</h4>
+                            <p><strong>Target:</strong> ${log.targetType || 'Unknown'} (${log.targetId || 'Unknown'})</p>
+                            <p><strong>Moderator:</strong> ${log.moderatorId || 'System'}</p>
+                            <p><strong>Reason:</strong> ${log.reason || 'No reason provided'}</p>
+                            <p><strong>Severity:</strong> ${log.severity || 'medium'}</p>
+                            <p><strong>Status:</strong> ${log.status || 'active'}</p>
+                            <p><strong>Timestamp:</strong> ${log.timestamp || log.createdAt || 'Unknown'}</p>
+                            <p><strong>Flagged:</strong> ${log.flagged ? 'Yes' : 'No'}</p>
+                            <div class="card-actions">
+                                <button onclick="showModerationForm('${log.id}')" class="btn btn-sm btn-primary">
+                                    <i class="fas fa-edit"></i> Edit
+                                </button>
+                                <button onclick="deleteLog('${log.id}')" class="btn btn-sm btn-danger">
+                                    <i class="fas fa-trash"></i> Delete
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')
+                    : '<p>No logs found</p>';
+
+                document.getElementById('logsList').innerHTML = html;
+                console.log(`✅ Loaded ${logs.length} logs`);
+                
+            } catch (error) {
+                console.error('❌ Error loading logs:', error);
+                document.getElementById('logsList').innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+
+        async function addSampleModerationLog() {
+            try {
+                const actions = ['user_login', 'review_posted', 'game_added', 'sentiment_analysis', 'content_flagged'];
+                const sentiments = ['positive', 'neutral', 'negative'];
+                
+                const logData = {
+                    timestamp: new Date().toISOString(),
+                    action: actions[Math.floor(Math.random() * actions.length)],
+                    sentiment: sentiments[Math.floor(Math.random() * sentiments.length)],
+                    flagged: Math.random() > 0.8, // 20% chance of being flagged
+                    threshold: Math.random(),
+                    mood: Math.random() > 0.5 ? 'happy' : 'neutral',
+                    analyzed: true,
+                    userId: 'sample_user_id',
+                    details: {
+                        source: 'automated_test',
+                        confidence: Math.random()
+                    },
+                    createdAt: new Date().toISOString()
+                };
+
+                const docRef = await db.collection('moderationLogs').add(logData);
+                console.log(`✅ Moderation log added with ID: ${docRef.id}`);
+                await loadModerationLogs();
+                
+            } catch (error) {
+                console.error('❌ Error adding moderation log:', error);
+            }
+        }
+
+        async function deleteLog(logId) {
+            if (confirm('Are you sure you want to delete this moderation log?')) {
+                try {
+                    await db.collection('moderationLogs').doc(logId).delete();
+                    console.log(`✅ Log deleted: ${logId}`);
+                    showNotification('Moderation log deleted successfully!', 'success');
+                    await loadModerationLogs();
+                    await refreshStats(); // Update dashboard stats
+                } catch (error) {
+                    console.error('❌ Error deleting log:', error);
+                    showNotification('Error deleting log: ' + error.message, 'error');
+                }
+            }
+        }
+
+        // Dashboard Stats
+        async function refreshStats() {
+            try {
+                const collections = ['users', 'games', 'reviews', 'tags', 'recommendations', 'moderationLogs'];
+                const stats = {};
+                
+                for (const collection of collections) {
+                    const snapshot = await db.collection(collection).get();
+                    stats[collection] = snapshot.size;
+                }
+                
+                document.getElementById('statsUsers').textContent = stats.users || 0;
+                document.getElementById('statsGames').textContent = stats.games || 0;
+                document.getElementById('statsReviews').textContent = stats.reviews || 0;
+                document.getElementById('statsTags').textContent = stats.tags || 0;
+                document.getElementById('statsRecommendations').textContent = stats.recommendations || 0;
+                document.getElementById('statsModerationLogs').textContent = stats.moderationLogs || 0;
+                
+                console.log('✅ Stats updated:', stats);
+                
+            } catch (error) {
+                console.error('❌ Error refreshing stats:', error);
+            }
+        }
+
+        // CHEAPSHARK API INTEGRATION
+        
+        function showGameBrowser() {
+            document.getElementById('gameBrowser').style.display = 'block';
+            // Automatically load popular games when browser opens
+            loadPopularGames();
+        }
+
+        function hideGameBrowser() {
+            document.getElementById('gameBrowser').style.display = 'none';
+        }
+
+        async function loadPopularGames() {
+            const resultsDiv = document.getElementById('apiSearchResults');
+            resultsDiv.innerHTML = '<p class="text-center"><i class="fas fa-spinner fa-spin"></i> Loading popular games...</p>';
+
+            try {
+                // Get deals sorted by metacritic score to find popular games
+                const response = await fetch('https://www.cheapshark.com/api/1.0/deals?sortBy=Metacritic&desc=1&pageSize=20');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const deals = await response.json();
+                
+                // Convert deals to games format for display
+                const games = deals.map(deal => ({
+                    gameID: deal.gameID,
+                    external: deal.title,
+                    thumb: deal.thumb,
+                    metacriticScore: deal.metacriticScore,
+                    steamRating: deal.steamRatingPercent,
+                    cheapest: deal.salePrice,
+                    cheapestDealID: deal.dealID
+                }));
+                
+                displayCheapSharkResults(games);
+                
+            } catch (error) {
+                console.error('Error fetching popular games:', error);
+                resultsDiv.innerHTML = `<p class="error">Error loading popular games: ${error.message}</p>`;
+            }
+        }
+
+        function displayCheapSharkResults(games) {
+            const resultsDiv = document.getElementById('apiSearchResults');
+            
+            if (!games || games.length === 0) {
+                resultsDiv.innerHTML = '<p class="text-center">No games found</p>';
+                return;
+            }
+
+            const html = `
+                <div class="api-games-grid">
+                    ${games.map(game => `
+                        <div class="api-game-card">
+                            <div class="game-thumb">
+                                <img src="${game.thumb || 'https://via.placeholder.com/150x200?text=No+Image'}" 
+                                     alt="${game.external}" 
+                                     onerror="this.src='https://via.placeholder.com/150x200?text=No+Image'">
+                            </div>
+                            <div class="game-info">
+                                <h4>${game.external}</h4>
+                                ${game.metacriticScore ? `<p><strong>Metacritic:</strong> ${game.metacriticScore}/100</p>` : ''}
+                                ${game.steamRating ? `<p><strong>Steam Rating:</strong> ${game.steamRating}%</p>` : ''}
+                                ${game.cheapest ? `<p><strong>Lowest Price:</strong> $${game.cheapest}</p>` : ''}
+                                <button class="btn btn-sm btn-success" onclick="addGameFromAPI('${game.gameID}', '${game.external.replace(/'/g, "\\'")}')">
+                                    <i class="fas fa-plus"></i> Add to Library
+                                </button>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+
+            resultsDiv.innerHTML = html;
+        }
+
+        async function addGameFromAPI(gameID, title) {
+            try {
+                // Get detailed game info
+                const response = await fetch(`https://www.cheapshark.com/api/1.0/games?id=${gameID}`);
+                const gameDetails = await response.json();
+                
+                if (!gameDetails || !gameDetails.info) {
+                    throw new Error('Could not fetch game details');
+                }
+
+                const info = gameDetails.info;
+                
+                // Prepare game data for Firebase
+                const gameData = {
+                    title: info.title || title,
+                    developer: extractDeveloper(info.title) || 'Unknown Developer',
+                    genre: ['Unknown'], // CheapShark doesn't provide genre info
+                    platform: ['PC'], // CheapShark is primarily PC games
+                    description: `Game sourced from CheapShark API. Steam App ID: ${info.steamAppID || 'Unknown'}`,
+                    status: 'available',
+                    steamAppID: info.steamAppID || null,
+                    thumb: info.thumb || null,
+                    cheapSharkID: gameID,
+                    createdAt: new Date().toISOString(),
+                    addedFrom: 'cheapshark_api'
+                };
+
+                // Add to Firebase
+                const docRef = await db.collection('games').add(gameData);
+                console.log(`✅ Game added from API with ID: ${docRef.id}`);
+                
+                // Show success message
+                showNotification(`Game "${gameData.title}" added to library!`, 'success');
+                
+                // Refresh the games list
+                await loadGames();
+                await refreshStats();
+                
+            } catch (error) {
+                console.error('❌ Error adding game from API:', error);
+                showNotification('Error adding game: ' + error.message, 'error');
+            }
+        }
+
+        function extractDeveloper(title) {
+            // Simple extraction - in real app you might want to use Steam API for better data
+            const patterns = [
+                /by\s+([^-\(]+)/i,
+                /from\s+([^-\(]+)/i,
+                /-\s*([^-\(]+)$/
+            ];
+            
+            for (const pattern of patterns) {
+                const match = title.match(pattern);
+                if (match && match[1]) {
+                    return match[1].trim();
+                }
+            }
+            
+            return null;
+        }
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <span class="notification-message">${message}</span>
+                    <button class="notification-close" onclick="this.parentElement.parentElement.remove()">&times;</button>
+                </div>
+            `;
+            
+            // Add to page
+            document.body.appendChild(notification);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+
+        // FORM FUNCTIONS FOR ALL COLLECTIONS
+
+        // 1. GAME FORM FUNCTIONS
+        function showGameForm(gameId = null) {
+            const form = document.getElementById('gameForm');
+            const formTitle = document.getElementById('gameFormTitle');
+            const formElement = document.getElementById('gameFormElement');
+            
+            form.style.display = 'block';
+            formElement.reset();
+            
+            if (gameId) {
+                formTitle.textContent = 'Edit Game';
+                document.getElementById('gameId').value = gameId;
+                // Load game data for editing
+                loadGameForEdit(gameId);
+            } else {
+                formTitle.textContent = 'Add New Game';
+                document.getElementById('gameId').value = '';
+            }
+        }
+
+        function hideGameForm() {
+            document.getElementById('gameForm').style.display = 'none';
+        }
+
+        async function submitGameForm(event) {
+            event.preventDefault();
+            
+            console.log('🔄 Form submission started...'); // Debug log
+            
+            const gameId = document.getElementById('gameId').value;
+            const formData = {
+                title: document.getElementById('gameTitle').value,
+                developer: document.getElementById('gameDeveloper').value,
+                genre: document.getElementById('gameGenre').value.split(',').map(g => g.trim()).filter(g => g),
+                platform: document.getElementById('gamePlatform').value.split(',').map(p => p.trim()).filter(p => p),
+                description: document.getElementById('gameDescription').value,
+                status: document.getElementById('gameStatus').value,
+                updatedAt: new Date().toISOString()
+            };
+
+            if (!gameId) {
+                formData.createdAt = new Date().toISOString();
+            }
+
+            console.log('📝 Form data:', formData); // Debug log
+
+            try {
+                let docRef;
+                if (gameId) {
+                    await db.collection('games').doc(gameId).update(formData);
+                    console.log('✅ Game updated successfully');
+                    alert('Game updated successfully!');
+                } else {
+                    docRef = await db.collection('games').add(formData);
+                    console.log('✅ Game added successfully with ID:', docRef.id);
+                    alert('Game added successfully!');
+                }
+                
+                hideGameForm();
+                await loadGames();
+                await refreshStats(); // Update dashboard stats
+            } catch (error) {
+                console.error('❌ Error saving game:', error);
+                alert('Error saving game: ' + error.message);
+            }
+        }
+
+        // 2. REVIEW FORM FUNCTIONS
+        function showReviewForm(reviewId = null) {
+            const form = document.getElementById('reviewForm');
+            const formTitle = document.getElementById('reviewFormTitle');
+            const formElement = document.getElementById('reviewFormElement');
+            
+            form.style.display = 'block';
+            formElement.reset();
+            
+            if (reviewId) {
+                formTitle.textContent = 'Edit Review';
+                document.getElementById('reviewId').value = reviewId;
+                loadReviewForEdit(reviewId);
+            } else {
+                formTitle.textContent = 'Add New Review';
+                document.getElementById('reviewId').value = '';
+            }
+        }
+
+        function hideReviewForm() {
+            document.getElementById('reviewForm').style.display = 'none';
+        }
+
+        async function submitReviewForm(event) {
+            event.preventDefault();
+            
+            const reviewId = document.getElementById('reviewId').value;
+            const formData = {
+                gameId: document.getElementById('reviewGameId').value,
+                userId: document.getElementById('reviewUserId').value,
+                rating: parseInt(document.getElementById('reviewRating').value),
+                title: document.getElementById('reviewTitle').value,
+                content: document.getElementById('reviewText').value,
+                recommended: document.getElementById('reviewRecommended').value === 'true',
+                moderationStatus: 'pending',
+                helpful: 0,
+                notHelpful: 0,
+                updatedAt: new Date().toISOString()
+            };
+
+            if (!reviewId) {
+                formData.createdAt = new Date().toISOString();
+            }
+
+            try {
+                let docRef;
+                if (reviewId) {
+                    await db.collection('reviews').doc(reviewId).update(formData);
+                    console.log('✅ Review updated successfully');
+                    showNotification('Review updated successfully!', 'success');
+                } else {
+                    docRef = await db.collection('reviews').add(formData);
+                    console.log('✅ Review added successfully with ID:', docRef.id);
+                    showNotification('Review added successfully!', 'success');
+                }
+                
+                hideReviewForm();
+                await loadReviews();
+                await refreshStats(); // Update dashboard stats
+            } catch (error) {
+                console.error('❌ Error saving review:', error);
+                showNotification('Error saving review: ' + error.message, 'error');
+            }
+        }
+
+        // 3. RECOMMENDATION FORM FUNCTIONS
+        function showRecommendationForm(recId = null) {
+            const form = document.getElementById('recommendationForm');
+            const formTitle = document.getElementById('recommendationFormTitle');
+            const formElement = document.getElementById('recommendationFormElement');
+            
+            form.style.display = 'block';
+            formElement.reset();
+            
+            if (recId) {
+                formTitle.textContent = 'Edit Recommendation';
+                document.getElementById('recommendationId').value = recId;
+                loadRecommendationForEdit(recId);
+            } else {
+                formTitle.textContent = 'Add New Recommendation';
+                document.getElementById('recommendationId').value = '';
+            }
+        }
+
+        function hideRecommendationForm() {
+            document.getElementById('recommendationForm').style.display = 'none';
+        }
+
+        async function submitRecommendationForm(event) {
+            event.preventDefault();
+            
+            const recId = document.getElementById('recommendationId').value;
+            const formData = {
+                userId: document.getElementById('recommendationUserId').value,
+                gameId: document.getElementById('recommendationGameId').value,
+                reason: document.getElementById('recommendationReason').value,
+                score: parseFloat(document.getElementById('recommendationScore').value),
+                description: document.getElementById('recommendationDescription').value,
+                category: document.getElementById('recommendationCategory').value,
+                status: document.getElementById('recommendationStatus').value,
+                algorithm: 'manual',
+                isViewed: false,
+                generatedAt: new Date().toISOString(),
+                updatedAt: new Date().toISOString()
+            };
+
+            if (!recId) {
+                formData.createdAt = new Date().toISOString();
+            }
+
+            try {
+                let docRef;
+                if (recId) {
+                    await db.collection('recommendations').doc(recId).update(formData);
+                    console.log('✅ Recommendation updated successfully');
+                    showNotification('Recommendation updated successfully!', 'success');
+                } else {
+                    docRef = await db.collection('recommendations').add(formData);
+                    console.log('✅ Recommendation added successfully with ID:', docRef.id);
+                    showNotification('Recommendation added successfully!', 'success');
+                }
+                
+                hideRecommendationForm();
+                await loadRecommendations();
+                await refreshStats(); // Update dashboard stats
+            } catch (error) {
+                console.error('❌ Error saving recommendation:', error);
+                showNotification('Error saving recommendation: ' + error.message, 'error');
+            }
+        }
+
+        // 4. TAG FORM FUNCTIONS
+        function showTagForm(tagId = null) {
+            const form = document.getElementById('tagForm');
+            const formTitle = document.getElementById('tagFormTitle');
+            const formElement = document.getElementById('tagFormElement');
+            
+            form.style.display = 'block';
+            formElement.reset();
+            
+            if (tagId) {
+                formTitle.textContent = 'Edit Tag';
+                document.getElementById('tagId').value = tagId;
+                loadTagForEdit(tagId);
+            } else {
+                formTitle.textContent = 'Add New Tag';
+                document.getElementById('tagId').value = '';
+            }
+        }
+
+        function hideTagForm() {
+            document.getElementById('tagForm').style.display = 'none';
+        }
+
+        async function submitTagForm(event) {
+            event.preventDefault();
+            
+            const tagId = document.getElementById('tagId').value;
+            const formData = {
+                name: document.getElementById('tagName').value,
+                type: document.getElementById('tagCategory').value,
+                description: document.getElementById('tagDescription').value,
+                color: document.getElementById('tagColor').value,
+                isActive: document.getElementById('tagStatus').value === 'active',
+                gameCount: 0,
+                createdBy: null,
+                updatedAt: new Date().toISOString()
+            };
+
+            if (!tagId) {
+                formData.createdAt = new Date().toISOString();
+            }
+
+            try {
+                let docRef;
+                if (tagId) {
+                    await db.collection('tags').doc(tagId).update(formData);
+                    console.log('✅ Tag updated successfully');
+                    showNotification('Tag updated successfully!', 'success');
+                } else {
+                    docRef = await db.collection('tags').add(formData);
+                    console.log('✅ Tag added successfully with ID:', docRef.id);
+                    showNotification('Tag added successfully!', 'success');
+                }
+                
+                hideTagForm();
+                await loadTags();
+                await refreshStats(); // Update dashboard stats
+            } catch (error) {
+                console.error('❌ Error saving tag:', error);
+                showNotification('Error saving tag: ' + error.message, 'error');
+            }
+        }
+
+        // 5. MODERATION FORM FUNCTIONS
+        function showModerationForm(modId = null) {
+            const form = document.getElementById('moderationForm');
+            const formTitle = document.getElementById('moderationFormTitle');
+            const formElement = document.getElementById('moderationFormElement');
+            
+            form.style.display = 'block';
+            formElement.reset();
+            
+            if (modId) {
+                formTitle.textContent = 'Edit Moderation Log';
+                document.getElementById('moderationId').value = modId;
+                loadModerationForEdit(modId);
+            } else {
+                formTitle.textContent = 'Add Moderation Log';
+                document.getElementById('moderationId').value = '';
+            }
+        }
+
+        function hideModerationForm() {
+            document.getElementById('moderationForm').style.display = 'none';
+        }
+
+        async function submitModerationForm(event) {
+            event.preventDefault();
+            
+            const modId = document.getElementById('moderationId').value;
+            const formData = {
+                action: document.getElementById('moderationAction').value,
+                targetId: document.getElementById('moderationTargetId').value,
+                targetType: document.getElementById('moderationTargetType').value,
+                moderatorId: document.getElementById('moderationModeratorId').value,
+                reason: document.getElementById('moderationReason').value,
+                details: document.getElementById('moderationDetails').value,
+                severity: document.getElementById('moderationSeverity').value,
+                status: document.getElementById('moderationStatus').value,
+                timestamp: new Date().toISOString(),
+                flagged: true,
+                analyzed: true,
+                updatedAt: new Date().toISOString()
+            };
+
+            if (!modId) {
+                formData.createdAt = new Date().toISOString();
+            }
+
+            try {
+                let docRef;
+                if (modId) {
+                    await db.collection('moderationLogs').doc(modId).update(formData);
+                    console.log('✅ Moderation log updated successfully');
+                    showNotification('Moderation log updated successfully!', 'success');
+                } else {
+                    docRef = await db.collection('moderationLogs').add(formData);
+                    console.log('✅ Moderation log added successfully with ID:', docRef.id);
+                    showNotification('Moderation log added successfully!', 'success');
+                }
+                
+                hideModerationForm();
+                await loadModerationLogs();
+                await refreshStats(); // Update dashboard stats
+            } catch (error) {
+                console.error('❌ Error saving moderation log:', error);
+                showNotification('Error saving moderation log: ' + error.message, 'error');
+            }
+        }
+
+        // 6. USER FORM FUNCTIONS
+        function showUserForm(userId = null) {
+            const form = document.getElementById('userForm');
+            const formTitle = document.getElementById('userFormTitle');
+            const formElement = document.getElementById('userFormElement');
+            
+            form.style.display = 'block';
+            formElement.reset();
+            
+            if (userId) {
+                formTitle.textContent = 'Edit User';
+                document.getElementById('userId').value = userId;
+                loadUserForEdit(userId);
+            } else {
+                formTitle.textContent = 'Add New User';
+                document.getElementById('userId').value = '';
+            }
+        }
+
+        function hideUserForm() {
+            document.getElementById('userForm').style.display = 'none';
+        }
+
+        async function submitUserForm(event) {
+            event.preventDefault();
+            
+            const userId = document.getElementById('userId').value;
+            const formData = {
+                username: document.getElementById('userUsername').value,
+                email: document.getElementById('userEmail').value,
+                displayName: document.getElementById('userDisplayName').value,
+                role: document.getElementById('userRole').value,
+                bio: document.getElementById('userBio').value,
+                location: document.getElementById('userLocation').value,
+                isActive: document.getElementById('userStatus').value === 'active',
+                status: document.getElementById('userStatus').value,
+                updatedAt: new Date().toISOString()
+            };
+
+            if (!userId) {
+                formData.createdAt = new Date().toISOString();
+            }
+
+            try {
+                let docRef;
+                if (userId) {
+                    await db.collection('users').doc(userId).update(formData);
+                    console.log('✅ User updated successfully');
+                    showNotification('User updated successfully!', 'success');
+                } else {
+                    docRef = await db.collection('users').add(formData);
+                    console.log('✅ User added successfully with ID:', docRef.id);
+                    showNotification('User added successfully!', 'success');
+                }
+                
+                hideUserForm();
+                await loadUsers();
+                await refreshStats(); // Update dashboard stats
+            } catch (error) {
+                console.error('❌ Error saving user:', error);
+                showNotification('Error saving user: ' + error.message, 'error');
+            }
+        }
+
+        // FILTER FUNCTIONS
+        function filterReviews() {
+            const searchTerm = document.getElementById('reviewsSearch').value.toLowerCase();
+            const reviewCards = document.querySelectorAll('.review-card');
+            
+            reviewCards.forEach(card => {
+                const title = card.querySelector('h4').textContent.toLowerCase();
+                card.style.display = title.includes(searchTerm) ? 'block' : 'none';
+            });
+        }
+
+        function filterRecommendations() {
+            const searchTerm = document.getElementById('recommendationsSearch').value.toLowerCase();
+            const recCards = document.querySelectorAll('.recommendation-card');
+            
+            recCards.forEach(card => {
+                const title = card.querySelector('h4').textContent.toLowerCase();
+                card.style.display = title.includes(searchTerm) ? 'block' : 'none';
+            });
+        }
+
+        function filterTags() {
+            const searchTerm = document.getElementById('tagsSearch').value.toLowerCase();
+            const tagCards = document.querySelectorAll('.tag-card');
+            
+            tagCards.forEach(card => {
+                const title = card.querySelector('h4').textContent.toLowerCase();
+                card.style.display = title.includes(searchTerm) ? 'block' : 'none';
+            });
+        }
+
+        function filterModerationLogs() {
+            const searchTerm = document.getElementById('moderationSearch').value.toLowerCase();
+            const logCards = document.querySelectorAll('.log-card');
+            
+            logCards.forEach(card => {
+                const title = card.querySelector('h4').textContent.toLowerCase();
+                card.style.display = title.includes(searchTerm) ? 'block' : 'none';
+            });
+        }
+
+        function filterUsers() {
+            const searchTerm = document.getElementById('usersSearch').value.toLowerCase();
+            const userCards = document.querySelectorAll('.user-card');
+            
+            userCards.forEach(card => {
+                const title = card.querySelector('h3').textContent.toLowerCase();
+                card.style.display = title.includes(searchTerm) ? 'block' : 'none';
+            });
+        }
+
+        // LOAD FOR EDIT FUNCTIONS
+        async function loadGameForEdit(gameId) {
+            try {
+                const doc = await db.collection('games').doc(gameId).get();
+                if (doc.exists) {
+                    const game = doc.data();
+                    document.getElementById('gameTitle').value = game.title || '';
+                    document.getElementById('gameDeveloper').value = game.developer || '';
+                    document.getElementById('gameGenre').value = Array.isArray(game.genre) ? game.genre.join(', ') : game.genre || '';
+                    document.getElementById('gamePlatform').value = Array.isArray(game.platform) ? game.platform.join(', ') : game.platform || '';
+                    document.getElementById('gameDescription').value = game.description || '';
+                    document.getElementById('gameStatus').value = game.status || 'available';
+                    document.getElementById('gameReleaseDate').value = game.releaseDate || '';
+                }
+            } catch (error) {
+                console.error('Error loading game for edit:', error);
+            }
+        }
+
+        async function loadReviewForEdit(reviewId) {
+            try {
+                const doc = await db.collection('reviews').doc(reviewId).get();
+                if (doc.exists) {
+                    const review = doc.data();
+                    document.getElementById('reviewGameId').value = review.gameId || '';
+                    document.getElementById('reviewUserId').value = review.userId || '';
+                    document.getElementById('reviewRating').value = review.rating || '';
+                    document.getElementById('reviewTitle').value = review.title || '';
+                    document.getElementById('reviewText').value = review.content || '';
+                    document.getElementById('reviewRecommended').value = review.recommended ? 'true' : 'false';
+                }
+            } catch (error) {
+                console.error('Error loading review for edit:', error);
+            }
+        }
+
+        async function loadRecommendationForEdit(recId) {
+            try {
+                const doc = await db.collection('recommendations').doc(recId).get();
+                if (doc.exists) {
+                    const rec = doc.data();
+                    document.getElementById('recommendationUserId').value = rec.userId || '';
+                    document.getElementById('recommendationGameId').value = rec.gameId || '';
+                    document.getElementById('recommendationReason').value = rec.reason || '';
+                    document.getElementById('recommendationScore').value = rec.score || '';
+                    document.getElementById('recommendationDescription').value = rec.description || '';
+                    document.getElementById('recommendationCategory').value = rec.category || 'similar_games';
+                    document.getElementById('recommendationStatus').value = rec.status || 'active';
+                }
+            } catch (error) {
+                console.error('Error loading recommendation for edit:', error);
+            }
+        }
+
+        async function loadTagForEdit(tagId) {
+            try {
+                const doc = await db.collection('tags').doc(tagId).get();
+                if (doc.exists) {
+                    const tag = doc.data();
+                    document.getElementById('tagName').value = tag.name || '';
+                    document.getElementById('tagCategory').value = tag.type || '';
+                    document.getElementById('tagDescription').value = tag.description || '';
+                    document.getElementById('tagColor').value = tag.color || '#007bff';
+                    document.getElementById('tagStatus').value = tag.isActive ? 'active' : 'inactive';
+                }
+            } catch (error) {
+                console.error('Error loading tag for edit:', error);
+            }
+        }
+
+        async function loadModerationForEdit(modId) {
+            try {
+                const doc = await db.collection('moderationLogs').doc(modId).get();
+                if (doc.exists) {
+                    const mod = doc.data();
+                    document.getElementById('moderationAction').value = mod.action || '';
+                    document.getElementById('moderationTargetId').value = mod.targetId || '';
+                    document.getElementById('moderationTargetType').value = mod.targetType || '';
+                    document.getElementById('moderationModeratorId').value = mod.moderatorId || '';
+                    document.getElementById('moderationReason').value = mod.reason || '';
+                    document.getElementById('moderationDetails').value = mod.details || '';
+                    document.getElementById('moderationSeverity').value = mod.severity || 'medium';
+                    document.getElementById('moderationStatus').value = mod.status || 'active';
+                }
+            } catch (error) {
+                console.error('Error loading moderation log for edit:', error);
+            }
+        }
+
+        async function loadUserForEdit(userId) {
+            try {
+                const doc = await db.collection('users').doc(userId).get();
+                if (doc.exists) {
+                    const user = doc.data();
+                    document.getElementById('userUsername').value = user.username || '';
+                    document.getElementById('userEmail').value = user.email || '';
+                    document.getElementById('userDisplayName').value = user.displayName || '';
+                    document.getElementById('userRole').value = user.role || 'user';
+                    document.getElementById('userBio').value = user.bio || '';
+                    document.getElementById('userLocation').value = user.location || '';
+                    document.getElementById('userStatus').value = user.status || 'active';
+                }
+            } catch (error) {
+                console.error('Error loading user for edit:', error);
+            }
+        }
+
+        // NOTIFICATION SYSTEM
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <div class="notification-content">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                    <span>${message}</span>
+                </div>
+                <button class="notification-close" onclick="this.parentElement.remove()">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+
+        // Event Listeners
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const page = link.dataset.page;
+                showPage(page);
+            });
+        });
+
+        // Initialize on page load
+        window.addEventListener('load', async () => {
+            const success = await initFirebase();
+            if (success) {
+                await refreshStats();
+                console.log('🎉 GameHub initialized successfully!');
+                
+                // Add form submission listeners after DOM is loaded
+                const gameForm = document.getElementById('gameFormElement');
+                if (gameForm) {
+                    gameForm.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        console.log('🎯 Form submission event triggered via event listener!');
+                        submitGameForm(e);
+                    });
+                }
+                
+                // Auto-refresh data every  30 seconds to ensure mutual sync
+                setInterval(async () => {
+                    const currentPage = document.querySelector('.page.active').id;
+                    if (currentPage !== 'dashboard') {
+                        await loadPageData(currentPage);
+                    }
+                    await refreshStats();
+                }, 30000); // 30 seconds
+            } else {
+                console.error('❌ Failed to initialize GameHub');
+            }
+        });
+
+        // Add visibility change listener for real-time sync
+        document.addEventListener('visibilitychange', async () => {
+            if (!document.hidden) {
+                // Page became visible, refresh current data
+                const currentPage = document.querySelector('.page.active').id;
+                await loadPageData(currentPage);
+                await refreshStats();
+                console.log('🔄 Data refreshed due to page visibility change');
+            }
+        });
+    </script>
+</body>
+</html>
