@@ -119,22 +119,22 @@ class GameHubApp {
 
     initSearchFilters() {
         // Games search
-        document.getElementById('gamesSearch').addEventListener('input', (e) => {
+        document.getElementById('gamesSearch').addEventListener('input', () => {
             this.filterGames();
         });
 
         // Reviews search
-        document.getElementById('reviewsSearch').addEventListener('input', (e) => {
+        document.getElementById('reviewsSearch').addEventListener('input', () => {
             this.filterReviews();
         });
 
         // Users search
-        document.getElementById('usersSearch').addEventListener('input', (e) => {
+        document.getElementById('usersSearch').addEventListener('input', () => {
             this.filterUsers();
         });
 
         // Tags search
-        document.getElementById('tagsSearch').addEventListener('input', (e) => {
+        document.getElementById('tagsSearch').addEventListener('input', () => {
             this.filterTags();
         });
 
@@ -455,7 +455,11 @@ class GameHubApp {
                     await this.loadUsers();
                     break;
             }
-
+        } catch (error) {
+            console.error(`Error loading page data for ${pageId}:`, error);
+            this.showNotification(`Failed to load ${pageId} data.`, 'error');
+        }
+    }
 
     async loadDashboard() {
         // Update statistics

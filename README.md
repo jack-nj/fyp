@@ -1,4 +1,4 @@
-# GameHub - Final Year Project
+# Gamevibe Arena - Final Year Project
 
 A comprehensive gaming platform that combines AI-powered game idea generation, eye tracking technology, and community-driven content with integrated game discovery features.
 
