@@ -26,6 +26,10 @@ Thumbs.db
 # Firebase config (if you want to keep it private)
 # js/firebase-config.js
 
+# Firebase service account credentials - NEVER commit these!
+*firebase-adminsdk*.json
+c290-constellation-of-kindness-firebase-adminsdk-fbsvc-2da1aded82.json
+
 # Temporary files
 *.tmp
 *.temp
