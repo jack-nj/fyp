@@ -1,0 +1,774 @@
+openapi: 3.0.0
+info:
+  title: GameHub API
+  version: 1.0.0
+  description: |
+    REST API for GameHub platform featuring:
+    - Game idea CRUD operations with AI-powered moodboard generation
+    - Voting system for community-generated content
+    - Leaderboard for top-rated game concepts
+    - Object-based game recommendations
+    - Eye tracking and blink monitoring data
+    - CheapShark API integration for game deals
+    
+    AI services powered by Google Gemini 2.0 Flash
+  contact:
+    name: GameHub Support
+    email: support@gamehub.local
+  license:
+    name: MIT
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Development server
+  - url: https://api.gamehub.com/v1
+    description: Production server
+
+paths:
+  # Game Ideas Endpoints
+  /gameIdeas:
+    get:
+      tags:
+        - Game Ideas
+      summary: List all game ideas (moodboards)
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: isPublic
+          in: query
+          schema:
+            type: boolean
+        - name: gameType
+          in: query
+          schema:
+            type: string
+        - name: gameTheme
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of game ideas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/GameIdea'
+                  pagination:
+                    $ref: '#/components/schemas/Pagination'
+    post:
+      tags:
+        - Game Ideas
+      summary: Create a new game idea
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GameIdeaCreate'
+      responses:
+        '201':
+          description: Game idea created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameIdea'
+        '400':
+          description: Invalid input data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /gameIdeas/{id}:
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
+          type: string
+        description: Game idea ID
+    get:
+      tags:
+        - Game Ideas
+      summary: Get a specific game idea
+      responses:
+        '200':
+          description: Game idea details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameIdea'
+        '404':
+          description: Game idea not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags:
+        - Game Ideas
+      summary: Update a game idea
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GameIdeaUpdate'
+      responses:
+        '200':
+          description: Game idea updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameIdea'
+        '404':
+          description: Game idea not found
+    delete:
+      tags:
+        - Game Ideas
+      summary: Delete a game idea
+      responses:
+        '204':
+          description: Game idea deleted successfully
+        '404':
+          description: Game idea not found
+
+  /gameIdeas/{id}/vote:
+    post:
+      tags:
+        - Voting
+      summary: Cast a vote for a moodboard
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userId:
+                  type: string
+                  description: User ID casting the vote
+              required:
+                - userId
+      responses:
+        '200':
+          description: Vote recorded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                  totalVotes:
+                    type: integer
+        '400':
+          description: User already voted or invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Leaderboard Endpoints
+  /leaderboard:
+    get:
+      tags:
+        - Leaderboard
+      summary: Get leaderboard of top moodboards
+      parameters:
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [votes, recent]
+            default: votes
+        - name: filterTheme
+          in: query
+          schema:
+            type: string
+            enum: [sci-fi, fantasy, medieval, modern, cyberpunk, steampunk, post-apocalyptic, historical, space, underwater]
+        - name: filterType
+          in: query
+          schema:
+            type: string
+            enum: [action, adventure, rpg, strategy, puzzle, simulation, racing, horror, platformer, indie]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: Leaderboard data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stats:
+                    type: object
+                    properties:
+                      totalMoodboards:
+                        type: integer
+                      totalVotes:
+                        type: integer
+                  leaderboard:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/LeaderboardEntry'
+
+  # Object Search Endpoints
+  /objectSearch:
+    post:
+      tags:
+        - Object Search
+      summary: Find games by objects
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                objects:
+                  type: array
+                  items:
+                    type: string
+                  minItems: 1
+                  description: List of objects to search for
+              required:
+                - objects
+      responses:
+        '200':
+          description: Matching games found
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GameRecommendation'
+
+  /objectSearch/history:
+    get:
+      tags:
+        - Object Search
+      summary: Get user's search history
+      parameters:
+        - name: userId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Search history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SearchHistoryEntry'
+
+  # AI Generation Endpoints
+  /ai/generateMoodboard:
+    post:
+      tags:
+        - AI Generation
+      summary: Generate moodboard using Google Gemini AI
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                gameType:
+                  type: string
+                  enum: [action, adventure, rpg, strategy, puzzle, simulation, racing, horror, platformer, indie]
+                gameTheme:
+                  type: string
+                  enum: [sci-fi, fantasy, medieval, modern, cyberpunk, steampunk, post-apocalyptic, historical, space, underwater]
+                artStyle:
+                  type: string
+                  enum: [cartoon, realistic, pixel-art, abstract, minimalist, anime, retro]
+                targetPlatform:
+                  type: string
+                  enum: [pc, mobile, console, web, vr, multi]
+                additionalPrompts:
+                  type: string
+                  description: Additional creative direction
+                sourceGames:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CheapSharkGame'
+                  description: Games from CheapShark to mix (optional)
+              required:
+                - gameType
+                - gameTheme
+                - artStyle
+                - targetPlatform
+      responses:
+        '200':
+          description: Moodboard generated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeneratedMoodboard'
+        '400':
+          description: Invalid generation parameters
+        '500':
+          description: AI generation failed
+
+  /ai/generatePrice:
+    post:
+      tags:
+        - AI Generation
+      summary: Generate price suggestion for game concept
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                gameDescription:
+                  type: string
+                sourceGames:
+                  type: array
+                  items:
+                    $ref: '#/components/schemas/CheapSharkGame'
+                targetPlatform:
+                  type: string
+              required:
+                - gameDescription
+                - sourceGames
+      responses:
+        '200':
+          description: Price suggestion generated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceSuggestion'
+
+  # CheapShark Integration
+  /cheapshark/games:
+    get:
+      tags:
+        - CheapShark
+      summary: Get games from CheapShark API
+      parameters:
+        - name: pageSize
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: sortBy
+          in: query
+          schema:
+            type: string
+            enum: [Deal Rating, Title, Savings, Price, Metacritic, Reviews, Release, Store, recent]
+            default: recent
+      responses:
+        '200':
+          description: Games from CheapShark
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CheapSharkGame'
+
+  # Eye Tracking Data
+  /eyeTracking/sessions:
+    get:
+      tags:
+        - Eye Tracking
+      summary: Get blink monitoring sessions
+      parameters:
+        - name: userName
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Eye tracking sessions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/BlinkSession'
+    post:
+      tags:
+        - Eye Tracking
+      summary: Record blink monitoring session
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BlinkSessionCreate'
+      responses:
+        '201':
+          description: Session recorded successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BlinkSession'
+
+components:
+  schemas:
+    GameIdea:
+      type: object
+      properties:
+        id:
+          type: string
+        gameType:
+          type: string
+          enum: [action, adventure, rpg, strategy, puzzle, simulation, racing, horror, platformer, indie]
+        gameTheme:
+          type: string
+          enum: [sci-fi, fantasy, medieval, modern, cyberpunk, steampunk, post-apocalyptic, historical, space, underwater]
+        artStyle:
+          type: string
+          enum: [cartoon, realistic, pixel-art, abstract, minimalist, anime, retro]
+        targetPlatform:
+          type: string
+          enum: [pc, mobile, console, web, vr, multi]
+        description:
+          type: string
+        additionalPrompts:
+          type: string
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/GameImage'
+        votes:
+          type: integer
+          default: 0
+        voters:
+          type: array
+          items:
+            type: string
+        isPublic:
+          type: boolean
+          default: false
+        sourceGames:
+          type: array
+          items:
+            $ref: '#/components/schemas/CheapSharkGame'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    GameIdeaCreate:
+      type: object
+      required:
+        - gameType
+        - gameTheme
+        - artStyle
+        - targetPlatform
+      properties:
+        gameType:
+          type: string
+          enum: [action, adventure, rpg, strategy, puzzle, simulation, racing, horror, platformer, indie]
+        gameTheme:
+          type: string
+          enum: [sci-fi, fantasy, medieval, modern, cyberpunk, steampunk, post-apocalyptic, historical, space, underwater]
+        artStyle:
+          type: string
+          enum: [cartoon, realistic, pixel-art, abstract, minimalist, anime, retro]
+        targetPlatform:
+          type: string
+          enum: [pc, mobile, console, web, vr, multi]
+        additionalPrompts:
+          type: string
+        isPublic:
+          type: boolean
+          default: false
+
+    GameIdeaUpdate:
+      type: object
+      properties:
+        description:
+          type: string
+        additionalPrompts:
+          type: string
+        isPublic:
+          type: boolean
+
+    GameImage:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+        type:
+          type: string
+          enum: [concept, character, environment, ui]
+        prompt:
+          type: string
+
+    LeaderboardEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        rank:
+          type: integer
+        gameType:
+          type: string
+        gameTheme:
+          type: string
+        artStyle:
+          type: string
+        targetPlatform:
+          type: string
+        description:
+          type: string
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/GameImage'
+        votes:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    GameRecommendation:
+      type: object
+      properties:
+        title:
+          type: string
+        description:
+          type: string
+        matchScore:
+          type: number
+          minimum: 0
+          maximum: 1
+        matchingObjects:
+          type: array
+          items:
+            type: string
+        genre:
+          type: string
+        platform:
+          type: string
+        rating:
+          type: number
+        image:
+          type: string
+          format: uri
+
+    SearchHistoryEntry:
+      type: object
+      properties:
+        id:
+          type: string
+        objects:
+          type: array
+          items:
+            type: string
+        resultsCount:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+
+    GeneratedMoodboard:
+      type: object
+      properties:
+        description:
+          type: string
+        images:
+          type: array
+          items:
+            $ref: '#/components/schemas/GameImage'
+        generationMetadata:
+          type: object
+          properties:
+            model:
+              type: string
+              default: "Google Gemini 2.0 Flash"
+            generatedAt:
+              type: string
+              format: date-time
+            prompts:
+              type: array
+              items:
+                type: string
+
+    PriceSuggestion:
+      type: object
+      properties:
+        recommendedPrice:
+          type: number
+        priceRange:
+          type: object
+          properties:
+            min:
+              type: number
+            max:
+              type: number
+        reasoning:
+          type: string
+        comparableGames:
+          type: array
+          items:
+            type: object
+            properties:
+              title:
+                type: string
+              price:
+                type: number
+              similarity:
+                type: number
+
+    CheapSharkGame:
+      type: object
+      properties:
+        gameID:
+          type: string
+        title:
+          type: string
+        normalPrice:
+          type: string
+        salePrice:
+          type: string
+        savings:
+          type: string
+        thumb:
+          type: string
+          format: uri
+        metacriticScore:
+          type: string
+        dealRating:
+          type: string
+        steamRatingText:
+          type: string
+        steamRatingPercent:
+          type: string
+
+    BlinkSession:
+      type: object
+      properties:
+        id:
+          type: string
+        userName:
+          type: string
+        blinksPerMinute:
+          type: number
+        healthStatus:
+          type: string
+          enum: ["TOO LOW - Increase blinking!", "TOO HIGH - Relax your eyes", "HEALTHY RATE - Keep it up!"]
+        totalBlinks:
+          type: integer
+        sessionDurationMinutes:
+          type: number
+        optimalRate:
+          type: integer
+          default: 16
+        type:
+          type: string
+          default: "blink_monitoring"
+        createdAt:
+          type: string
+          format: date-time
+        timestamp:
+          type: string
+          format: date-time
+
+    BlinkSessionCreate:
+      type: object
+      required:
+        - userName
+        - blinksPerMinute
+        - totalBlinks
+        - sessionDurationMinutes
+      properties:
+        userName:
+          type: string
+        blinksPerMinute:
+          type: number
+        totalBlinks:
+          type: integer
+        sessionDurationMinutes:
+          type: number
+
+    Pagination:
+      type: object
+      properties:
+        limit:
+          type: integer
+        offset:
+          type: integer
+        total:
+          type: integer
+        hasMore:
+          type: boolean
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        code:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+tags:
+  - name: Game Ideas
+    description: CRUD operations for AI-generated game concepts
+  - name: Voting
+    description: Community voting system for moodboards
+  - name: Leaderboard
+    description: Rankings and statistics for top game ideas
+  - name: Object Search
+    description: Object-based game recommendations
+  - name: AI Generation
+    description: Google Gemini-powered content generation
+  - name: CheapShark
+    description: Integration with CheapShark game deals API
+  - name: Eye Tracking
+    description: Blink monitoring and eye health data
